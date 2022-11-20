@@ -60,7 +60,7 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch:
 ```
-4. 右上の `Start commit` -> 何か適当な履歴メッセージを記入して `Comitt Changes` を押してください。
+4. 右上の `Start commit` -> 何か適当な履歴メッセージを記入して `Commit Changes` を押してください。
 
 これで毎時0分に実行されます。`cron: '30 0 * * *'` とすれば毎日9時30分(UTC時刻0時30分)になります。[参照](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onschedule)  
 
