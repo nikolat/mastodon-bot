@@ -51,7 +51,7 @@ readとwriteの権限があればOKです。
 先程は手動でGitHub Actionsを実行して投稿しましたが、  
 毎時0分にGitHub Actionsが実行されるよう設定します。
 
-1. code タブから .github/workflows -> sample.ymal を開きます。
+1. code タブから .github/workflows -> sample.yml を開きます。
 2. 右上の方に鉛筆マーク(Edit this file)を押します。
 3. `on:` のところを以下の通り加筆します。
 ```
