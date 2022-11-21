@@ -1,37 +1,20 @@
-#おまじない 使用する道具をここで宣言します
-from os import getenv
+import subprocess
+import os
 import requests
-import zoneinfo
-import datetime
-import random
 
-#←これはコメント 里々や華和梨と一緒ですね
-#投稿するメッセージを返す関数の定義
+#里々を呼び出して投稿メッセージを取得する
 def get_message():
-	#現在時刻の取得サンプル
-	jst = zoneinfo.ZoneInfo('Asia/Tokyo')
-	now = datetime.datetime.now(jst)
-	mes1 = now.strftime('%H時%M分') #年から秒まで出力するには '%Y-%m-%d %H:%M:%S' とする
-	#配列からランダムで選択するサンプル
-	gobi = ['をお知らせします', 'ですわ', 'やで']
-	mes2 = random.choice(gobi)
-	#if文のサンプル
-	if now.hour < 6:
-		mes3 = 'こんばんは'
-	elif now.hour < 10:
-		mes3 = 'おはようございます'
-	elif now.hour < 18:
-		mes3 = 'こんにちは'
-	else:
-		mes3 = 'こんばんは'
-	#ハッシュタグを加えてみる
-	mes4 = '#ukadon_bot'
-	#文字列を結合するには+でつなぐ \nは改行 伺かと一緒ですね
-	mes = mes1 + mes2 + '\n' + mes3 + ' ' + mes4
-	#完成した文字列を返す
-	return mes
+	s = ''
+	subprocess.run(fr'shioricaller\shioricaller.exe ghost\master\satori.dll {os.getcwd()}\ghost\master\ < shioricaller\request.txt > shioricaller\response.txt', shell=True)
+	with open(r'shioricaller\response.txt', encoding='shift_jis') as f:
+		for line in f:
+			if line.startswith('Value: '):
+				s = line[7:]
+				break
+	s = s.replace(r'\n', '\n')
+	return s
 
-#mastodonに投稿する関数 ここは読み飛ばしてください
+#Mastodonへ投稿する
 def post_entry(mastodon_url, access_token, status, visibility='unlisted'):
 	url = f'{mastodon_url}api/v1/statuses'
 	headers = {'Authorization': f'Bearer {access_token}'}
@@ -39,12 +22,11 @@ def post_entry(mastodon_url, access_token, status, visibility='unlisted'):
 	r = requests.post(url, data=payload, headers=headers)
 	r.raise_for_status()
 
-#ここからスタートします
 if __name__ == '__main__':
 	#投稿先のMastodonのURL
 	mastodon_url = 'https://ukadon.shillest.net/'
 	#アクセストークン これはGitHubのSettingでActions secretsを設定しておきます ナイショの文字列なので
-	access_token = getenv('MASTODON_ACCESS_TOKEN')
+	access_token = os.getenv('MASTODON_ACCESS_TOKEN')
 	#投稿するメッセージ
 	status = get_message()
 	#公開範囲 public(公開), unlisted(未収載), private(フォロワーのみ), direct(指定された相手のみ) (directは宛先も必要)

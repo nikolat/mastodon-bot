@@ -3,10 +3,11 @@ on:
   workflow_dispatch:
 jobs:
   toot:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 5
     env:
       MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+      PYTHONUTF8: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v3
