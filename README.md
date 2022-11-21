@@ -66,21 +66,7 @@ on:
 
 ## 投稿メッセージの編集
 
-投稿プログラムはPythonというプログラミング言語で書かれています。  
-参考: [Python入門](https://www.javadrive.jp/python/)  
-ここでは複雑な解説はしません。  
-メッセージの編集方法だけ案内します。  
+投稿メッセージは里々で書かれています。  
 
-1. code タブから sample.py を開きます。
-2. `def get_message():` 行を以下の通り編集し、先程と同じ要領でcommitします。
-
-```
-def get_message():
-	return '固定メッセージ'
-```
-これで毎回固定メッセージが投稿されます。  
-現在時刻の取得、ランダム選択、if文の分岐、文字列処理の方法など  
-初期状態では簡単なサンプルだけ載せてあります。  
-より複雑なことを行う場合は Python を習得する必要があります。  
-
-未熟な私の作ったBOTでよければ[こちら](https://github.com/nikolat/potiboard-update-checker)にありますので参考にしてください。
+1. code タブから ghost/master/dic_OnMastodon.txt を開きます。
+2. `OnMastodonTootRequest` の戻り値を適宜編集し、先程と同じ要領でcommitします。
