@@ -40,7 +40,7 @@ readとwriteの権限があればOKです。
 ## 動作確認
 
 1. Actionsタブを開いてください。(再生マークが付いています)
-2. 左カラムの Exec Sample を選択してください。
+2. 左カラムの Satori Sample を選択してください。(里々を使用する場合)
 3. 右の方の `Run workflow` ボタンを押してください。
 4. 緑の `Run workflow` を選択してください。
 
@@ -51,7 +51,7 @@ readとwriteの権限があればOKです。
 先程は手動でGitHub Actionsを実行して投稿しましたが、  
 毎時0分にGitHub Actionsが実行されるよう設定します。
 
-1. code タブから .github/workflows -> sample.yml を開きます。
+1. code タブから .github/workflows -> sample_satori.yml を開きます。(里々を使用する場合)
 2. 右上の方に鉛筆マーク(Edit this file)を押します。
 3. `on:` のところを以下の通り加筆します。
 ```
@@ -66,7 +66,14 @@ on:
 
 ## 投稿メッセージの編集
 
-投稿メッセージは里々で書かれています。  
+投稿メッセージは里々・華和梨で書かれています。  
 
-1. code タブから ghost/master/dic_OnMastodon.txt を開きます。
+### 里々
+
+1. code タブから shiori/satori/dic_OnMastodon.txt を開きます。
+2. `OnMastodonTootRequest` の戻り値を適宜編集し、先程と同じ要領でcommitします。
+
+### 華和梨
+
+1. code タブから shiori/kawari/kawarirc.kis を開きます。
 2. `OnMastodonTootRequest` の戻り値を適宜編集し、先程と同じ要領でcommitします。
