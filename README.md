@@ -66,11 +66,16 @@ on:
 
 ## 投稿メッセージの編集
 
-投稿メッセージは里々・華和梨で書かれています。  
+投稿メッセージは里々・YAYA・華和梨で書かれています。  
 
 ### 里々
 
 1. code タブから shiori/satori/dic_OnMastodon.txt を開きます。
+2. `OnMastodonTootRequest` の戻り値を適宜編集し、先程と同じ要領でcommitします。
+
+### YAYA
+
+1. code タブから shiori/yaya/OnMastodon.dic を開きます。
 2. `OnMastodonTootRequest` の戻り値を適宜編集し、先程と同じ要領でcommitします。
 
 ### 華和梨

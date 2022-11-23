@@ -3,21 +3,24 @@ import os
 import requests
 import sys
 
-#里々を呼び出して投稿メッセージを取得する
+#栞を呼び出して投稿メッセージを取得する
 def get_message(shiori):
 	dlldir = os.getcwd()
 	if shiori == 'yaya':
 		dllpath = r'shiori\yaya\yaya.dll'
 		dlldir += r'\shiori\yaya\\'
+		enc = 'utf-8'
 	elif shiori == 'kawari':
 		dllpath = r'shiori\kawari\shiori.dll'
 		dlldir += r'\shiori\kawari\\'
+		enc = 'shift_jis'
 	else:
 		dllpath = r'shiori\satori\satori.dll'
 		dlldir += r'\shiori\satori\\'
+		enc = 'shift_jis'
 	s = ''
 	subprocess.run(fr'shioricaller\shioricaller.exe {dllpath} {dlldir} < shioricaller\request.txt > shioricaller\response.txt', shell=True)
-	with open(r'shioricaller\response.txt', encoding='shift_jis') as f:
+	with open(r'shioricaller\response.txt', encoding=enc) as f:
 		for line in f:
 			if line.startswith('Value: '):
 				s = line[7:]

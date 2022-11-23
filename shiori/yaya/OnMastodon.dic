@@ -1,0 +1,5 @@
+OnMastodonTootRequest
+{
+	//UTC時刻なので9を足す
+	"YAYAが%((hour()+9)%24)時%(minute())分をお知らせします。\n#ukadon_bot"
+}
