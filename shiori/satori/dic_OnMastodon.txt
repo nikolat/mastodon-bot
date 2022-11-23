@@ -1,0 +1,3 @@
+＠OnMastodonTootRequest
+里々が（calc,(（現在時）+9)%24）時（zen2han,（現在分））分をお知らせします。\n#ukadon_bot
+＃UTC時刻なので9を足す
