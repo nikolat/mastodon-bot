@@ -1,5 +1,6 @@
 GET SHIORI/3.0
 Charset: UTF-8
 Sender: GitHub-Actions
+SecurityLevel: Local
 ID: OnMastodonTootRequest
 
