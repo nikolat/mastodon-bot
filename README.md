@@ -13,7 +13,7 @@ MastodonでBOTを稼働させるサンプルです。
 
 ### アクセストークンの取得  
 
-投稿したいアカウントで[こちら](https://ukadon.shillest.net/@nikolat/109364410054265227)を参考にアクセストークンを取得してください。  
+投稿したいアカウントで[こちら](https://ouvill.net/from_twitter_to_mastdon/#i-4)を参考にアクセストークンを取得してください。  
 readとwriteの権限があればOKです。  
 
 ## リポジトリの作成
