@@ -111,6 +111,9 @@ load
 	if ISVAR('aitalkinterval') == 0 {
 		aitalkinterval   = TALK_INTERVAL
 	}
+	if ISVAR('communicateratio') == 0 {
+		communicateratio = COM_RATIO
+	}
 	if ISVAR('ghostupmin_last') == 0 {
 		ghostupmin_last = 0
 	}
@@ -140,7 +143,7 @@ load
 	SHIORI3FW.HWndOld      = (0,0)
 	SHIORI3FW.BalloonHWnd  = (0,0)
 	SHIORI3FW.UniqueID     = ''
-	SHIORI3FW.DebugMode    = 1
+	SHIORI3FW.DebugMode    = 0
 	SHIORI3FW.CanTalkFlag  = 1
 
 	SHIORI3FW.Eventid = ''
@@ -166,6 +169,13 @@ load
 
 	array_eventtranslate = ASORT('string,ascending',GETFUNCLIST('OnGhostEventTranslate'))
 	array_translateinternal = ASORT('string,ascending',GETFUNCLIST('OnTranslateInternal'))
+
+	installedghostlist = IARRAY
+	installedsakuralist = IARRAY
+	installedkerolist = IARRAY
+
+	SHIORI3FW.BasewareNotifysInstalledSakuraName = 0
+	SHIORI3FW.BasewareNotifysInstalledKeroName = 0
 
 	SHIORI3FW.InitChain
 	SHIORI3FW.InitAdditionalReturn
@@ -282,6 +292,10 @@ SHIORI3FW.UserName
 SHIORI3FW.UserNameFull
 SHIORI3FW.UserBirthday
 SHIORI3FW.UserSex
+SHIORI3FW.BasewareNotifysInstalledSakuraName
+SHIORI3FW.BasewareNotifysInstalledKeroName
+SHIORI3FW.LastSurface
+SHIORI3FW.IsVisible
 C_CRLF2
 C_CRLF
 C_BYTE1
@@ -293,8 +307,6 @@ C_BYTE1
 	//SHIORI3FW.BalloonName
 	//SHIORI3FW.BalloonNameOld
 	//SHIORI3FW.BalloonPath
-	//SHIORI3FW.LastSurface
-	//SHIORI3FW.IsVisible
 
 	ERASEVAR(SPLIT(_var,C_CRLF))
 
@@ -383,12 +395,9 @@ request
 	var.req.value = IARRAY
 	var.req.rawvalue = IARRAY
 
-	_linenum = 0
-	_idparsed = 0
-
 	status = ''
 	SHIORI3FW.Eventid=''
-	SHIORI3FW.SecurityLevel='Internal'//互換性のためデフォルトはInternal
+	SHIORI3FW.SecurityLevel='local'//互換性のためデフォルトはlocal
 
 	while _lineend > _linestart {
 		//行分割
@@ -398,15 +407,6 @@ request
 		//空行もしくはみつからなかった
 		if _lineend <= _linestart {
 			break
-		}
-
-		_linenum += 1
-		if SHIORI3FW.REQUEST_LINES_LIMIT {
-			if _linenum > SHIORI3FW.REQUEST_LINES_LIMIT {
-				if _idparsed {
-					break
-				}
-			}
 		}
 
 		_lin = SUBSTR(_reqdata,_linestart,(_lineend - _linestart))
@@ -434,22 +434,6 @@ request
 			if SUBSTR(SHIORI3FW.Eventid, 0, 2) != 'On' {
 				SHIORI3FW.Eventid = 'On_' + SHIORI3FW.Eventid
 			}
-
-			if SHIORI3FW.Eventid == 'OnAiTalk' || SHIORI3FW.Eventid == 'OnAITalk' {
-				SHIORI3FW.Eventid = 'OnAITalkNewEvent'
-			}
-
-			SHIORI3FW.EventidTranslate = SHIORI3FW.TranslateEvent(SHIORI3FW.Eventid)
-
-			// ハンドラが無い場合は即返る
-			if !ISFUNC(SHIORI3FW.EventidTranslate) && !SHIORI3FW.IsImportantEvent {
-				SHIORI3FW.MakeEmptyResponse(SHIORI3FW.Eventid)
-				--
-				C_CRLF
-
-				return
-			}
-			_idparsed = 1
 		}
 		// セキュリティレベル
 		elseif _key == 'SecurityLevel' {
@@ -466,15 +450,6 @@ request
 		//Status
 		elseif _key == 'Status' {
 			status = _value
-		}
-
-		//特定のイベントを除きExternalなら204で返る
-		if SHIORI3FW.SecurityLevel == 'External' && SHIORI3FW.Eventid != 'OnXUkagakaLinkOpen' {
-			SHIORI3FW.MakeEmptyResponse
-			--
-			C_CRLF
-
-			return
 		}
 
 		// キーと値を記憶
@@ -494,6 +469,25 @@ request
 		else {
 			var.req.value ,= TOAUTOEX(_value)
 		}
+	}
+
+	if SHIORI3FW.Eventid == 'OnAiTalk' || SHIORI3FW.Eventid == 'OnAITalk' {
+		SHIORI3FW.Eventid = 'OnAITalkNewEvent'
+	}
+
+	if TOLOWER(SHIORI3FW.SecurityLevel) == 'external' {
+		SHIORI3FW.Eventid = 'ExternalEvent.' + SHIORI3FW.Eventid
+	}
+
+	SHIORI3FW.EventidTranslate = SHIORI3FW.TranslateEvent(SHIORI3FW.Eventid)
+
+	// ハンドラが無い場合は即返る
+	if !ISFUNC(SHIORI3FW.EventidTranslate) && !SHIORI3FW.IsImportantEvent {
+		SHIORI3FW.MakeEmptyResponse(SHIORI3FW.Eventid)
+		--
+		C_CRLF
+
+		return
 	}
 
 	OnRequest
@@ -661,7 +655,8 @@ SHIORI3FW.PushAdditionalReturn : void
 SHIORI3FW.Push_X_SSTP_PassThru : void
 {
 	_h = 'X-SSTP-PassThru-' + TOSTR(_argv[0])
-	SHIORI3FW.PushAdditionalReturn(_h,_argv[1])
+	_argv[0] = IARRAY
+	SHIORI3FW.PushAdditionalReturn(_h,_argv)
 }
 
 //------------------------------------------------------------------------------
@@ -823,7 +818,11 @@ SHIORI3FW.RaiseIDEvent
 
 	if _result != '' { //トークあり
 		// 遅延EVAL
-		_talk = RE_SPLIT(_result,'(' + EVAL_DELIM + '|' + CHAIN_DELIM + ')')
+		_talk=IARRAY
+		if SHIORI3FW.ENABLE_DELAYED_EVAL
+			_talk = RE_SPLIT(_result,'(' + EVAL_DELIM + '|' + CHAIN_DELIM + ')')
+		else
+			_talk = RE_SPLIT(_result,'(' + CHAIN_DELIM + ')')
 		_delim = RE_GETSTR
 		_n = ARRAYSIZE(_delim)
 
@@ -843,7 +842,7 @@ SHIORI3FW.RaiseIDEvent
 
 		//後から遅延設定
 		for _i = 0 ; _i < _n ; _i += 1 {
-			if _delim[_i] == EVAL_DELIM {
+			if SHIORI3FW.ENABLE_DELAYED_EVAL && _delim[_i] == EVAL_DELIM {
 				// 遅延EVAL
 				void EVAL(_talk[_i + 1])
 			}
@@ -890,17 +889,32 @@ SHIORI3FW.RaiseIDEvent
 SHIORI3FW.MakeEmptyResponse
 {
 	case _argv[0] {
-		when 'OnFirstBoot', 'OnBoot', 'OnWindowStateRestore', 'OnGhostChanged'
+		when 'OnFirstBoot', 'OnGhostChanged' {
+			_evt = SHIORI3FW.TranslateEvent('OnBoot')
+			if ISFUNC(_evt) {
+				//SSP側でフォールバックするのでここでは204を返す
+				"SHIORI/3.0 204 No Content%(C_CRLF)Charset: %(S_CHARSET)%(C_CRLF)"
+			}
+			else {
+				// OnBootハンドラもない時に、スコープ0/1の基本サーフィスを出す必要があるイベント
+				"SHIORI/3.0 200 OK%(C_CRLF)Sender: AYA%(C_CRLF)Charset: %(S_CHARSET)%(C_CRLF)/
+				Value: \0\s[0]\1\s[10]\e%(C_CRLF)"
+			}
+		}
+		when 'OnBoot', 'OnWindowStateRestore' {
 			// スコープ0/1の基本サーフィスを出す必要があるイベント
 			"SHIORI/3.0 200 OK%(C_CRLF)Sender: AYA%(C_CRLF)Charset: %(S_CHARSET)%(C_CRLF)/
 			Value: \0\s[0]\1\s[10]\e%(C_CRLF)"
-		when 'OnClose'
+		}
+		when 'OnClose' {
 			// 終了指示を出す必要があるイベント
 			"SHIORI/3.0 200 OK%(C_CRLF)Sender: AYA%(C_CRLF)Charset: %(S_CHARSET)%(C_CRLF)/
 			Value: \0\-\e%(C_CRLF)"
-		others
+		}
+		others {
 			// 上記以外では204を返送して良い
 			"SHIORI/3.0 204 No Content%(C_CRLF)Charset: %(S_CHARSET)%(C_CRLF)"
+		}
 	}
 }
 
@@ -1231,24 +1245,38 @@ SHIORI3FW.ExecuteDl2ToDll
 //インストール済ゴーストリストの構築
 //******************************************************************************
 //------------------------------------------------------------------------------
-//関数名：On_installedghostname
+//関数名：On_installedghostname/sakuraname/keroname
 //機能　：インストール済ゴースト名通知イベント
 //------------------------------------------------------------------------------
+On_installedsakuraname {
+	SHIORI3FW.BasewareNotifysInstalledSakuraName=1
+	
+	installedsakuralist = reference.raw
+}
 
-On_installedghostname
-{
-	installedghostlist  = IARRAY
-	installedsakuralist = IARRAY
-	installedkerolist   = IARRAY
+On_installedkeroname {
+	SHIORI3FW.BasewareNotifysInstalledKeroName=1
+	
+	installedkerolist = reference.raw
+}
+
+On_installedghostname {
+	//Referenceから取得
+	installedghostlist = reference.raw
+	
+	if SHIORI3FW.BasewareNotifysInstalledSakuraName && SHIORI3FW.BasewareNotifysInstalledKeroName {
+		return
+	}
+	
 
 	// materia、もしくはイベントからの取得が指示されていなければファイル走査で取得する処理を実行
 	if basewarename == 'embryo' || !SHIORI3FW.IGLIST_ACCEL {
-		SHIORI3FW.StructInstalledGhostList
-		return
-	}
+		installedsakuralist = IARRAY
+		installedkerolist   = IARRAY
+		installedghostlist  = IARRAY
 
-	// Referenceから取得
-	installedghostlist = reference.raw
+		SHIORI3FW.StructInstalledGhostList
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -1388,6 +1416,15 @@ FUNCTIONLOAD
 			0
 			return
 		}
+		// 相手のCharsetに合わせる
+		_i = 0
+		foreach var.lib.key; _key {
+			if _key == 'Charset' {
+				void CHARSETLIBEX(_argv[0], var.lib.value[_i])
+				break
+			}
+			_i++
+		}
 		SAORI.DllList ,= _argv[0]
 	}
 	1
@@ -1408,7 +1445,7 @@ FUNCTIONEX
 
 	// リクエスト文字列を作成
 	_reqheader = /
-		"EXECUTE SAORI/1.0%(C_CRLF)Charset: %(CHARSETLIBEX(_argv[0]))%(C_CRLF)Sender: AYA%(C_CRLF)SecurityLevel: Local%(C_CRLF)"
+		"EXECUTE SAORI/1.0%(C_CRLF)Charset: %(CHARSETLIBEX(_argv[0]))%(C_CRLF)Sender: AYA%(C_CRLF)SecurityLevel: local%(C_CRLF)"
 	for _i = 1; _i < _argc; _i++ {
 		_reqheader += "Argument%(_i - 1): %(_argv[_i])%(C_CRLF)"
 	}
@@ -1830,6 +1867,15 @@ SHIORI3EV.OnBalloonChange : void
 //------------------------------------------------------------------------------
 SHIORI3EV.OnAITalkNewEvent
 {
+	if RAND(100) < communicateratio
+	{
+		//---- communicateratio % の率で他ゴーストへ話しかけ
+		if ISFUNC('StartCommunicate') {
+			StartCommunicate
+			return
+		}
+		//else: ?
+	}
 	//互換用処理
 	_old_name = SHIORI3FW.TranslateEvent('OnAiTalk')
 	if ISFUNC(_old_name) {
@@ -1917,9 +1963,74 @@ SHIORI3EV.On_enable_debug : void
 
 SHIORI3EV.On_ShioriEcho
 {
-	if SHIORI3FW.DebugMode {
-		'\0Eval Result = ' + JOIN(EVAL(reference[0]),',')
+	if ISFUNC('On_ShioriEcho') {//User costom ShioriEcho
+		EVAL('On_ShioriEcho')
 	}
+	elseif SHIORI3FW.DebugMode {
+		_result=EVAL(reference[0])
+		'\0Eval Result = ' + JOIN(_result,',')
+		SHIORI3FW.Push_X_SSTP_PassThru('Result',_result)
+		SHIORI3FW.Push_X_SSTP_PassThru('Type','id: '+GETTYPEEX('_result'))
+	}
+	else {
+		'\0Need DebugMode'
+		SHIORI3FW.Push_X_SSTP_PassThru('Special','Need DebugMode')
+	}
+}
+
+SHIORI3EV.On_Has_Event : void {
+	_event_name=reference.raw[0]
+	_SecurityLevel=reference.raw[1]
+	if !_SecurityLevel
+		_SecurityLevel=SHIORI3FW.SecurityLevel
+	if SUBSTR(_event_name,0,2) != 'On'
+		_event_name='On_'+_event_name
+	_result=0
+	if TOLOWER(_SecurityLevel) == 'external'
+		_event_name='ExternalEvent.'+_event_name
+	_result=ISFUNC(_event_name)
+	if !_result
+		_result=ISFUNC('SHIORI3EV.'+_event_name)
+	SHIORI3FW.Push_X_SSTP_PassThru('Result',_result)
+}
+SHIORI3EV.ExternalEvent.On_Has_Event{
+	SHIORI3EV.On_Has_Event
+}
+SHIORI3EV.On_Get_Supported_Events: void {
+	_L=GETFUNCLIST('On')
+	_base_local_event_funcs=IARRAY
+	foreach _L;_func{
+		if SUBSTR(_func,2,1) == '_'
+			_func=SUBSTR(_func,3,STRLEN(_func))
+		_base_local_event_funcs,=_func
+	}
+	_L=GETFUNCLIST('SHIORI3EV.On')
+	foreach _L;_func{
+		_func=SUBSTR(_func,10,STRLEN(_func))
+		if SUBSTR(_func,2,1) == '_'
+			_func=SUBSTR(_func,3,STRLEN(_func))
+		_base_local_event_funcs,=_func
+	}
+	SHIORI3FW.Push_X_SSTP_PassThru('local',ARRAYDEDUP(_base_local_event_funcs))
+	_L=GETFUNCLIST('ExternalEvent.On')
+	_base_external_event_funcs=IARRAY
+	foreach _L;_func{
+		_func=SUBSTR(_func,14,STRLEN(_func))
+		if SUBSTR(_func,2,1) == '_'
+			_func=SUBSTR(_func,3,STRLEN(_func))
+		_base_external_event_funcs,=_func
+	}
+	_L=GETFUNCLIST('SHIORI3EV.ExternalEvent.On')
+	foreach _L;_func{
+		_func=SUBSTR(_func,24,STRLEN(_func))
+		if SUBSTR(_func,2,1) == '_'
+			_func=SUBSTR(_func,3,STRLEN(_func))
+		_base_external_event_funcs,=_func
+	}
+	SHIORI3FW.Push_X_SSTP_PassThru('external',ARRAYDEDUP(_base_external_event_funcs))
+}
+SHIORI3EV.ExternalEvent.On_Get_Supported_Events{
+	SHIORI3EV.On_Get_Supported_Events
 }
 
 DUMP : void
@@ -1970,7 +2081,12 @@ SHIORI3FW.GetTickInfo
 
 ghostupmin
 {
-	(GETSECCOUNT / 60) - ghostbootmin
+	if ISVAR('ghostbootmin') {
+		(GETSECCOUNT / 60) - ghostbootmin
+	}
+	else {
+		0
+	}
 }
 
 ghostupmin_total
